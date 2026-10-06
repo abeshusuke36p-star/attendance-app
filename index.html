@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>大学出席管理 - タイムテーブル</title>
-  <!-- ファビコン（タブ・ブックマーク用アイコン） -->
+  <!-- ファビコン -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%234f46e5'/><path fill='none' stroke='%23ffffff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round' d='M50 22 L85 38 L50 54 L15 38 Z M28 48.5 V66 C28 73 72 73 72 66 V48.5 M80 41 V66'/></svg>">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,6 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* iPhoneでの入力時フォーカスズーム防止（16px固定） */
     input, select, textarea {
       font-size: 16px !important;
     }
@@ -47,14 +46,13 @@
 
     <!-- 1. 出欠記録タブ -->
     <section id="view-records" class="tab-content">
-      <!-- 週ナビゲーション -->
       <div class="bg-white rounded-xl shadow-sm p-3 mb-3 flex items-center justify-between">
         <button id="btn-prev-week" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
           <i class="fa-solid fa-chevron-left mr-1"></i> 前週
         </button>
         <div class="text-center">
-          <div id="week-display-label" class="font-bold text-slate-800 text-sm">2026年 10月 第1週</div>
-          <div id="week-date-range" class="text-[11px] text-slate-500">10/05 (月) 〜 10/09 (金)</div>
+          <div id="week-display-label" class="font-bold text-slate-800 text-sm">----年 --月 第-週</div>
+          <div id="week-date-range" class="text-[11px] text-slate-500">--/-- 〜 --/--</div>
         </div>
         <div class="flex gap-1">
           <button id="btn-this-week" class="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition">
@@ -66,11 +64,8 @@
         </div>
       </div>
 
-      <!-- 出欠入力用 時間割グリッド -->
       <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
-        <div id="attendance-grid-container">
-          <!-- JSで動的に表示 -->
-        </div>
+        <div id="attendance-grid-container"></div>
       </div>
     </section>
 
@@ -84,13 +79,11 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
-        <div id="edit-grid-container">
-          <!-- JSで一括編集グリッドを出力 -->
-        </div>
+        <div id="edit-grid-container"></div>
       </div>
     </section>
 
-    <!-- 3. 出席状況集計タブ（時間割形式） -->
+    <!-- 3. 出席状況集計タブ -->
     <section id="view-summary" class="tab-content hidden">
       <div class="bg-white rounded-xl p-3 mb-3 shadow-sm border border-slate-100 flex justify-between items-center">
         <div>
@@ -100,9 +93,7 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
-        <div id="summary-grid-container">
-          <!-- JSで集計用の時間割グリッドを出力 -->
-        </div>
+        <div id="summary-grid-container"></div>
       </div>
     </section>
 
@@ -126,14 +117,12 @@
     </div>
   </nav>
 
-  <!-- ----------------- モーダル群 ----------------- -->
-
-  <!-- 1. 出欠記録モーダル -->
+  <!-- モーダル群 -->
   <div id="modal-record" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
     <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-5 shadow-xl transition-all">
       <div class="flex justify-between items-start mb-3">
         <div>
-          <div id="rec-modal-date" class="text-xs font-bold text-indigo-600">2026/10/05(月) 1限</div>
+          <div id="rec-modal-date" class="text-xs font-bold text-indigo-600">--</div>
           <h3 id="rec-modal-title" class="text-base font-bold text-slate-800">科目名</h3>
         </div>
         <button class="btn-close-modal text-slate-400 hover:text-slate-600 p-1">
@@ -142,7 +131,6 @@
       </div>
 
       <form id="form-attendance-record" class="space-y-4">
-        <!-- ステータス選択（出席・遅刻・欠席・休講/テストなし） -->
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-2">出欠ステータス</label>
           <div class="grid grid-cols-4 gap-1.5">
@@ -173,31 +161,25 @@
           </div>
         </div>
 
-        <!-- 遅刻時間入力 (OS風ダイヤル選択) -->
         <div id="delay-input-container" class="bg-amber-50 border border-amber-200 p-3 rounded-xl hidden">
           <label class="block text-xs font-bold text-amber-800 mb-1.5"><i class="fa-solid fa-stopwatch mr-1"></i> 遅刻時間の指定</label>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[10px] text-amber-700 font-bold mb-1">分 (0〜90分)</label>
-              <select id="select-delay-min" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 font-bold outline-none">
-                <!-- JSで自動生成 -->
-              </select>
+              <label class="block text-[10px] text-amber-700 font-bold mb-1">分</label>
+              <select id="select-delay-min" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 font-bold outline-none"></select>
             </div>
             <div>
-              <label class="block text-[10px] text-amber-700 font-bold mb-1">秒 (0〜59秒)</label>
-              <select id="select-delay-sec" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 font-bold outline-none">
-                <!-- JSで自動生成 -->
-              </select>
+              <label class="block text-[10px] text-amber-700 font-bold mb-1">秒</label>
+              <select id="select-delay-sec" class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 font-bold outline-none"></select>
             </div>
           </div>
         </div>
 
-        <!-- ボタン -->
         <div class="flex gap-2 pt-2">
           <button type="button" id="btn-clear-record" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs transition">
             未記録に戻す
           </button>
-          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition shadow-md shadow-indigo-200">
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition shadow-md">
             保存する
           </button>
         </div>
@@ -205,13 +187,12 @@
     </div>
   </div>
 
-  <!-- 1-B. 1月20日 振替可能日専用・科目割り当てモーダル -->
   <div id="modal-special-swap" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
     <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-5 shadow-xl transition-all">
       <div class="flex justify-between items-start mb-3">
         <div>
           <div class="text-xs font-bold text-amber-600"><i class="fa-solid fa-shuffle mr-1"></i> 1月20日(水) 振替可能日設定</div>
-          <h3 id="swap-modal-period-title" class="text-base font-bold text-slate-800">第1限に開講する科目を選択</h3>
+          <h3 id="swap-modal-period-title" class="text-base font-bold text-slate-800">実施科目を選択</h3>
         </div>
         <button class="btn-close-modal text-slate-400 hover:text-slate-600 p-1">
           <i class="fa-solid fa-xmark text-xl"></i>
@@ -221,24 +202,939 @@
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">実施する科目を選択</label>
-          <select id="select-swap-course" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl outline-none bg-white text-sm font-bold text-slate-800">
-            <!-- JSで登録済み科目を挿入 -->
-          </select>
+          <select id="select-swap-course" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl outline-none bg-white text-sm font-bold text-slate-800"></select>
         </div>
 
         <div class="flex gap-2 pt-2">
           <button type="button" id="btn-clear-swap" class="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs transition">
-            授業なし (空きコマ) にする
+            授業なしにする
           </button>
           <button type="button" id="btn-save-swap" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition shadow-md">
-            この科目を割り当てる
+            割り当てる
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 2. 科目作成・編集モーダル -->
   <div id="modal-course-edit" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
     <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-5 shadow-xl transition-all">
-      <div
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="course-modal-title" class="text-base font-bold text-slate-800">科目の登録・編集</h3>
+        <button class="btn-close-modal text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form id="form-course-edit" class="space-y-3">
+        <input type="hidden" id="course-id">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">科目名 <span class="text-rose-500">*</span></label>
+          <input type="text" id="course-name" required placeholder="例: 経済学入門" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">曜日</label>
+            <select id="course-day" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white">
+              <option value="1">月曜日</option>
+              <option value="2">火曜日</option>
+              <option value="3">水曜日</option>
+              <option value="4">木曜日</option>
+              <option value="5">金曜日</option>
+              <option value="6">土曜日</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">時限</label>
+            <select id="course-period" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">教室・メモ</label>
+            <input type="text" id="course-location" placeholder="例: 301教室" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">単位数</label>
+            <select id="course-credits" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"></select>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+          <label class="block text-xs font-bold text-slate-700 mb-1">許容欠席数</label>
+          <div class="flex items-center gap-3">
+            <select id="course-max-absences" class="w-28 px-3 py-2 border border-slate-300 rounded-xl outline-none bg-white font-bold"></select>
+            <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600">
+              <input type="checkbox" id="course-unlimited-absences" class="w-4 h-4 rounded text-indigo-600">
+              無制限 (∞)
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" id="btn-delete-course" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs transition hidden">
+            削除
+          </button>
+          <button type="submit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition shadow-md">
+            保存する
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-course-history" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[85vh] flex flex-col transition-all border border-slate-100">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-3">
+        <div>
+          <span id="hist-modal-sub" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">--</span>
+          <h3 id="hist-modal-title" class="text-base font-bold text-slate-800 mt-1">--</h3>
+        </div>
+        <button class="btn-close-modal text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <div id="hist-modal-stats" class="grid grid-cols-4 gap-1.5 bg-slate-50 p-2.5 rounded-xl text-center mb-3"></div>
+
+      <div class="flex-1 overflow-y-auto hide-scrollbar space-y-1.5 pr-1">
+        <div class="text-xs font-bold text-slate-500 mb-1 px-1"><i class="fa-solid fa-clock-rotate-left mr-1"></i> 授業ごとの記録履歴</div>
+        <div id="hist-modal-list" class="space-y-1.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-settings" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+    <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl p-5 shadow-xl transition-all">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-bold text-slate-800"><i class="fa-solid fa-gear text-indigo-600 mr-1.5"></i> アプリ設定</h3>
+        <button class="btn-close-modal text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form id="form-settings" class="space-y-4">
+        <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-indigo-900"><i class="fa-solid fa-building-columns mr-1"></i> 京都大学モード (2026後期)</span>
+            <input type="checkbox" id="setting-kyodai-mode" class="w-5 h-5 text-indigo-600 rounded">
+          </div>
+          <p class="text-[10px] text-indigo-700">京大の後期日程（10/1〜2/5）の祝日、振替授業、試験・FB期間の自動設定を有効にします。</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">1日の最大時限数</label>
+          <select id="setting-max-periods" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs outline-none bg-white font-bold">
+            <option value="4">4限まで</option>
+            <option value="5">5限まで</option>
+            <option value="6">6限まで</option>
+            <option value="7">7限まで</option>
+            <option value="8">8限まで</option>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <div>
+            <div class="text-xs font-bold text-slate-700">土曜日を表示する</div>
+            <div class="text-[10px] text-slate-500">土曜に授業がある場合は有効にします</div>
+          </div>
+          <input type="checkbox" id="setting-include-saturday" class="w-5 h-5 text-indigo-600 rounded">
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+          <button type="button" id="btn-load-sample" class="text-xs text-rose-600 hover:underline font-semibold">
+            全データをリセット・初期化
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition shadow-md">
+            設定を保存
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- JavaScript コード -->
+  <script>
+    const DAY_NAMES = ["月", "火", "水", "木", "金", "土"];
+    
+    // 安全なデータ読み込み関数
+    let settings = { maxPeriods: 5, includeSaturday: false, kyodaiMode: true };
+    try {
+      const parsed = JSON.parse(localStorage.getItem('univ_settings'));
+      if (parsed && typeof parsed === 'object') settings = Object.assign(settings, parsed);
+    } catch(e) {}
+
+    let courses = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem('univ_courses'));
+      if (Array.isArray(parsed) && parsed.length > 0) courses = parsed;
+    } catch(e) {}
+
+    if (courses.length === 0) {
+      courses = [
+        { id: '1', name: '経済学入門', dayOfWeek: 1, period: 1, location: '101教室', credits: 2, maxAbsences: 3 },
+        { id: '2', name: '英語コミュニケーション', dayOfWeek: 2, period: 2, location: 'LL教室', credits: 1, maxAbsences: 2 },
+        { id: '3', name: 'プログラミング基礎', dayOfWeek: 3, period: 3, location: 'PC室1', credits: 2, maxAbsences: null }
+      ];
+    }
+
+    let records = {};
+    try {
+      const parsed = JSON.parse(localStorage.getItem('univ_records'));
+      if (parsed && typeof parsed === 'object') records = parsed;
+    } catch(e) {}
+
+    let swapAssignments = {};
+    try {
+      const parsed = JSON.parse(localStorage.getItem('univ_swap_assignments'));
+      if (parsed && typeof parsed === 'object') swapAssignments = parsed;
+    } catch(e) {}
+
+    let currentWeekMonday = getMonday(new Date('2026-10-05'));
+    let activeTargetDate = null;
+    let activeCourseId = null;
+    let activeSwapPeriod = null;
+
+    const KYODAI_SCHEDULE_2026_FALL = {
+      swaps: { '2026-10-15': 1, '2026-11-26': 2 },
+      offDates: {
+        '2026-10-12': '祝日(スポーツの日)',
+        '2026-11-03': '祝日(文化の日)',
+        '2026-11-20': '休講(NF準備)',
+        '2026-11-23': '祝日(勤労感謝の日)',
+        '2026-11-24': '休講(NF片付)',
+        '2027-01-11': '祝日(成人の日)',
+        '2027-01-15': '共テ準備(休講)'
+      },
+      specialDates: { '2027-01-20': '振替可能日' },
+      periods: [
+        { start: '2026-12-29', end: '2027-01-03', label: '冬休み', type: 'off' },
+        { start: '2027-01-25', end: '2027-01-29', label: '期末試験', type: 'exam' },
+        { start: '2027-02-01', end: '2027-02-05', label: 'FB期間', type: 'fb' }
+      ]
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSelectOptions();
+      initEventListeners();
+      updateWeekHeaderDisplay();
+      renderAllViews();
+    });
+
+    function initSelectOptions() {
+      const minSelect = document.getElementById('select-delay-min');
+      const secSelect = document.getElementById('select-delay-sec');
+      minSelect.innerHTML = '';
+      for (let i = 0; i <= 90; i++) minSelect.innerHTML += `<option value="${i}">${i} 分</option>`;
+      secSelect.innerHTML = '';
+      for (let i = 0; i <= 59; i++) secSelect.innerHTML += `<option value="${i}">${i} 秒</option>`;
+
+      const creditSelect = document.getElementById('course-credits');
+      creditSelect.innerHTML = '';
+      for (let c = 1; c <= 10; c++) creditSelect.innerHTML += `<option value="${c}">${c} 単位</option>`;
+
+      const maxAbsSelect = document.getElementById('course-max-absences');
+      maxAbsSelect.innerHTML = '';
+      for (let a = 0; a <= 30; a++) maxAbsSelect.innerHTML += `<option value="${a}">${a} 回</option>`;
+    }
+
+    function saveData() {
+      localStorage.setItem('univ_settings', JSON.stringify(settings));
+      localStorage.setItem('univ_courses', JSON.stringify(courses));
+      localStorage.setItem('univ_records', JSON.stringify(records));
+      localStorage.setItem('univ_swap_assignments', JSON.stringify(swapAssignments));
+      renderAllViews();
+    }
+
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(date.setDate(diff));
+    }
+
+    function formatDateStr(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDays(date, days) {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    }
+
+    function getDayScheduleInfo(date) {
+      const dateStr = formatDateStr(date);
+      const originalDayOfWeek = date.getDay() === 0 ? 7 : date.getDay();
+
+      if (!settings.kyodaiMode) {
+        return { effectiveDay: originalDayOfWeek, isOff: false, label: null, type: 'normal' };
+      }
+
+      const sched = KYODAI_SCHEDULE_2026_FALL;
+      if (dateStr < '2026-10-01' || dateStr > '2027-02-05') {
+        return { effectiveDay: originalDayOfWeek, isOff: true, label: '開講期間外', type: 'off' };
+      }
+      if (sched.swaps[dateStr]) {
+        const swapDay = sched.swaps[dateStr];
+        return { effectiveDay: swapDay, isOff: false, label: `${DAY_NAMES[swapDay - 1]}曜振替`, type: 'swap' };
+      }
+      if (sched.specialDates[dateStr]) {
+        return { effectiveDay: originalDayOfWeek, isOff: false, label: sched.specialDates[dateStr], type: 'special_swap' };
+      }
+      if (sched.offDates[dateStr]) {
+        return { effectiveDay: originalDayOfWeek, isOff: true, label: sched.offDates[dateStr], type: 'off' };
+      }
+      for (let p of sched.periods) {
+        if (dateStr >= p.start && dateStr <= p.end) {
+          return { effectiveDay: originalDayOfWeek, isOff: (p.type === 'off'), label: p.label, type: p.type };
+        }
+      }
+      return { effectiveDay: originalDayOfWeek, isOff: false, label: null, type: 'normal' };
+    }
+
+    function initEventListeners() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const tab = e.currentTarget.dataset.tab;
+          switchTab(tab);
+        });
+      });
+
+      document.getElementById('btn-prev-week').addEventListener('click', () => {
+        currentWeekMonday = addDays(currentWeekMonday, -7);
+        updateWeekHeaderDisplay();
+        renderAttendanceGrid();
+      });
+
+      document.getElementById('btn-next-week').addEventListener('click', () => {
+        currentWeekMonday = addDays(currentWeekMonday, 7);
+        updateWeekHeaderDisplay();
+        renderAttendanceGrid();
+      });
+
+      document.getElementById('btn-this-week').addEventListener('click', () => {
+        currentWeekMonday = getMonday(new Date());
+        updateWeekHeaderDisplay();
+        renderAttendanceGrid();
+      });
+
+      document.getElementById('btn-open-settings').addEventListener('click', () => {
+        document.getElementById('setting-max-periods').value = settings.maxPeriods;
+        document.getElementById('setting-include-saturday').checked = settings.includeSaturday;
+        document.getElementById('setting-kyodai-mode').checked = settings.kyodaiMode;
+        openModal('modal-settings');
+      });
+
+      document.getElementById('form-settings').addEventListener('submit', (e) => {
+        e.preventDefault();
+        settings.maxPeriods = parseInt(document.getElementById('setting-max-periods').value);
+        settings.includeSaturday = document.getElementById('setting-include-saturday').checked;
+        settings.kyodaiMode = document.getElementById('setting-kyodai-mode').checked;
+        saveData();
+        closeModal('modal-settings');
+      });
+
+      document.getElementById('btn-load-sample').addEventListener('click', () => {
+        if (confirm('すべてのデータ・出欠記録を完全初期化しますか？')) {
+          localStorage.clear();
+          location.reload();
+        }
+      });
+
+      document.querySelectorAll('input[name="status"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const delayContainer = document.getElementById('delay-input-container');
+          if (e.target.value === 'late') delayContainer.classList.remove('hidden');
+          else delayContainer.classList.add('hidden');
+        });
+      });
+
+      document.getElementById('form-attendance-record').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const status = document.querySelector('input[name="status"]:checked').value;
+        const min = parseInt(document.getElementById('select-delay-min').value) || 0;
+        const sec = parseInt(document.getElementById('select-delay-sec').value) || 0;
+
+        const recordKey = `${activeTargetDate}_${activeCourseId}`;
+        records[recordKey] = {
+          status: status,
+          delayMinutes: status === 'late' ? min : 0,
+          delaySeconds: status === 'late' ? sec : 0
+        };
+
+        saveData();
+        closeModal('modal-record');
+      });
+
+      document.getElementById('btn-clear-record').addEventListener('click', () => {
+        const recordKey = `${activeTargetDate}_${activeCourseId}`;
+        delete records[recordKey];
+        saveData();
+        closeModal('modal-record');
+      });
+
+      document.getElementById('btn-save-swap').addEventListener('click', () => {
+        const courseId = document.getElementById('select-swap-course').value;
+        if (courseId) {
+          swapAssignments[`p_${activeSwapPeriod}`] = courseId;
+        } else {
+          delete swapAssignments[`p_${activeSwapPeriod}`];
+        }
+        saveData();
+        closeModal('modal-special-swap');
+      });
+
+      document.getElementById('btn-clear-swap').addEventListener('click', () => {
+        delete swapAssignments[`p_${activeSwapPeriod}`];
+        saveData();
+        closeModal('modal-special-swap');
+      });
+
+      document.getElementById('course-unlimited-absences').addEventListener('change', (e) => {
+        const maxSelect = document.getElementById('course-max-absences');
+        maxSelect.disabled = e.target.checked;
+        if (e.target.checked) maxSelect.classList.add('bg-slate-100', 'text-slate-400');
+        else maxSelect.classList.remove('bg-slate-100', 'text-slate-400');
+      });
+
+      document.getElementById('form-course-edit').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('course-id').value;
+        const name = document.getElementById('course-name').value.trim();
+        const dayOfWeek = parseInt(document.getElementById('course-day').value);
+        const period = parseInt(document.getElementById('course-period').value);
+        const location = document.getElementById('course-location').value.trim();
+        const credits = parseInt(document.getElementById('course-credits').value) || 2;
+        const isUnlimited = document.getElementById('course-unlimited-absences').checked;
+        const maxAbsences = isUnlimited ? null : parseInt(document.getElementById('course-max-absences').value);
+
+        if (id) {
+          const idx = courses.findIndex(c => c.id === id);
+          if (idx !== -1) courses[idx] = { id, name, dayOfWeek, period, location, credits, maxAbsences };
+        } else {
+          courses.push({ id: Date.now().toString(), name, dayOfWeek, period, location, credits, maxAbsences });
+        }
+
+        saveData();
+        closeModal('modal-course-edit');
+      });
+
+      document.getElementById('btn-delete-course').addEventListener('click', () => {
+        const id = document.getElementById('course-id').value;
+        if (id && confirm('この科目を削除しますか？')) {
+          courses = courses.filter(c => c.id !== id);
+          saveData();
+          closeModal('modal-course-edit');
+        }
+      });
+
+      document.querySelectorAll('.btn-close-modal').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const modal = e.target.closest('.fixed');
+          if (modal) modal.classList.add('hidden');
+        });
+      });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-indigo-600', 'font-bold');
+        btn.classList.add('text-slate-400', 'font-medium');
+      });
+
+      const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-indigo-600', 'font-bold');
+        activeBtn.classList.remove('text-slate-400', 'font-medium');
+      }
+
+      const targetSection = document.getElementById(`view-${tabName}`);
+      if (targetSection) targetSection.classList.remove('hidden');
+      renderAllViews();
+    }
+
+    function updateWeekHeaderDisplay() {
+      const sunday = addDays(currentWeekMonday, settings.includeSaturday ? 5 : 4);
+      const startStr = `${currentWeekMonday.getMonth() + 1}/${currentWeekMonday.getDate()}`;
+      const endStr = `${sunday.getMonth() + 1}/${sunday.getDate()}`;
+      
+      document.getElementById('week-display-label').textContent = `${currentWeekMonday.getFullYear()}年 ${currentWeekMonday.getMonth() + 1}月第${Math.ceil(currentWeekMonday.getDate() / 7)}週`;
+      document.getElementById('week-date-range').textContent = `${startStr} (${DAY_NAMES[0]}) 〜 ${endStr} (${DAY_NAMES[settings.includeSaturday ? 5 : 4]})`;
+    }
+
+    function renderAllViews() {
+      renderAttendanceGrid();
+      renderTimetableEditGrid();
+      renderSummaryGrid();
+    }
+
+    function toggleCancelledStatus(event, dateStr, courseId) {
+      event.stopPropagation();
+      const recordKey = `${dateStr}_${courseId}`;
+      const record = records[recordKey];
+
+      if (record && record.status === 'cancelled') {
+        delete records[recordKey];
+      } else {
+        records[recordKey] = { status: 'cancelled', delayMinutes: 0, delaySeconds: 0 };
+      }
+      saveData();
+    }
+
+    // 1. 出欠記録グリッド描画（確実なグリッド指定）
+    function renderAttendanceGrid() {
+      const container = document.getElementById('attendance-grid-container');
+      const dayCount = settings.includeSaturday ? 6 : 5;
+      const totalCols = dayCount + 1;
+
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.25rem;" class="min-w-[320px]">`;
+
+      html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
+      for (let d = 0; d < dayCount; d++) {
+        const targetDate = addDays(currentWeekMonday, d);
+        const dateStr = formatDateStr(targetDate);
+        const dateMonthDay = `${targetDate.getMonth() + 1}/${targetDate.getDate()}`;
+        const isToday = dateStr === formatDateStr(new Date());
+        const schedInfo = getDayScheduleInfo(targetDate);
+
+        let badgeLabel = '';
+        if (schedInfo.label) {
+          const bg = schedInfo.type === 'swap' ? 'bg-amber-100 text-amber-800' : 
+                     schedInfo.type === 'special_swap' ? 'bg-indigo-100 text-indigo-800 font-bold' : 
+                     schedInfo.type === 'exam' ? 'bg-purple-100 text-purple-800 font-bold' : 
+                     schedInfo.type === 'fb' ? 'bg-teal-100 text-teal-800 font-bold' : 'bg-rose-100 text-rose-800';
+          badgeLabel = `<div class="text-[8px] font-bold px-1 rounded ${bg} line-clamp-1 mt-0.5">${schedInfo.label}</div>`;
+        }
+
+        html += `
+          <div class="p-1 text-center rounded-xl flex flex-col justify-between ${isToday ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700'}">
+            <div>
+              <div class="text-[9px] opacity-80">${dateMonthDay}</div>
+              <div class="text-xs font-bold">${DAY_NAMES[d]}</div>
+              ${badgeLabel}
+            </div>
+            <div class="flex gap-0.5 mt-1 pt-1 border-t ${isToday ? 'border-indigo-400' : 'border-slate-200'}">
+              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'present')" class="flex-1 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold hover:opacity-90">全出</button>
+              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'absent')" class="flex-1 py-0.5 rounded bg-rose-500 text-white text-[9px] font-bold hover:opacity-90">全欠</button>
+            </div>
+          </div>
+        `;
+      }
+
+      for (let p = 1; p <= settings.maxPeriods; p++) {
+        html += `<div class="p-1 text-center font-bold text-xs text-slate-500 flex items-center justify-center bg-slate-50 rounded">${p}</div>`;
+
+        for (let d = 0; d < dayCount; d++) {
+          const targetDate = addDays(currentWeekMonday, d);
+          const dateStr = formatDateStr(targetDate);
+          const schedInfo = getDayScheduleInfo(targetDate);
+
+          if (schedInfo.type === 'special_swap') {
+            const assignedCourseId = swapAssignments[`p_${p}`];
+            const course = courses.find(c => c.id === assignedCourseId);
+
+            if (course) {
+              const recordKey = `${dateStr}_${course.id}`;
+              const record = records[recordKey];
+              let badgeHtml = '<span class="text-[9px] text-indigo-600 font-bold">振替授業</span>';
+              if (record) {
+                if (record.status === 'present') badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[9px]">出席</span>';
+                if (record.status === 'late') badgeHtml = '<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[9px]">遅刻</span>';
+                if (record.status === 'absent') badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[9px]">欠席</span>';
+                if (record.status === 'cancelled') badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[9px]">休講/無</span>';
+              }
+
+              html += `
+                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1.5 border border-indigo-300 bg-indigo-50/40 rounded-xl flex flex-col justify-between min-h-[66px] cursor-pointer">
+                  <div class="flex justify-between items-start">
+                    <div class="text-[9px] text-indigo-700 font-bold line-clamp-1">振替: ${course.name}</div>
+                    <button onclick="toggleCancelledStatus(event, '${dateStr}', '${course.id}')" class="text-[8px] px-1 py-0.2 rounded ${record && record.status==='cancelled' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'} font-bold ml-0.5">休</button>
+                  </div>
+                  <div class="mt-1">${badgeHtml}</div>
+                </div>
+              `;
+            } else {
+              html += `
+                <div onclick="openSpecialSwapModal(${p})" class="border border-dashed border-indigo-300 bg-indigo-50/20 hover:bg-indigo-50 rounded-xl min-h-[66px] flex flex-col items-center justify-center cursor-pointer p-1 text-center">
+                  <i class="fa-solid fa-plus text-indigo-500 text-xs mb-0.5"></i>
+                  <span class="text-[9px] font-bold text-indigo-600">振替指定</span>
+                </div>
+              `;
+            }
+
+          } else if (schedInfo.isOff) {
+            html += `<div class="border border-slate-200 rounded-xl min-h-[66px] bg-slate-100/60 p-1 flex items-center justify-center text-[10px] text-slate-400 font-bold text-center">${schedInfo.label || '授業なし'}</div>`;
+          } else {
+            const course = courses.find(c => c.dayOfWeek === schedInfo.effectiveDay && c.period === p);
+
+            if (course) {
+              const recordKey = `${dateStr}_${course.id}`;
+              const record = records[recordKey];
+
+              let badgeHtml = '<span class="text-[9px] text-slate-400">未記録</span>';
+              let bgClass = 'bg-slate-50 border-slate-200 hover:border-indigo-300';
+
+              if (record) {
+                if (record.status === 'present') {
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[9px]"><i class="fa-solid fa-check"></i> 出席</span>';
+                  bgClass = 'bg-emerald-50/50 border-emerald-300';
+                } else if (record.status === 'late') {
+                  const delayText = (record.delayMinutes || record.delaySeconds) ? `${record.delayMinutes}分` : '';
+                  badgeHtml = `<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[9px]"><i class="fa-solid fa-clock"></i> 遅刻 ${delayText}</span>`;
+                  bgClass = 'bg-amber-50/50 border-amber-300';
+                } else if (record.status === 'absent') {
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[9px]"><i class="fa-solid fa-xmark"></i> 欠席</span>';
+                  bgClass = 'bg-rose-50/50 border-rose-300';
+                } else if (record.status === 'cancelled') {
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-200 text-slate-600 font-bold text-[9px]"><i class="fa-solid fa-ban"></i> 休講/無</span>';
+                  bgClass = 'bg-slate-100/90 border-slate-300';
+                }
+              }
+
+              const isCancelled = record && record.status === 'cancelled';
+
+              html += `
+                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1.5 border rounded-xl flex flex-col justify-between min-h-[66px] cursor-pointer transition ${bgClass}">
+                  <div>
+                    <div class="flex justify-between items-start gap-1">
+                      <div class="text-xs font-bold text-slate-800 line-clamp-1 flex-1">${course.name}</div>
+                      <button onclick="toggleCancelledStatus(event, '${dateStr}', '${course.id}')" 
+                              title="休講に設定" 
+                              class="text-[8px] px-1 py-0.2 rounded font-bold transition flex-shrink-0 ${isCancelled ? 'bg-slate-700 text-white' : 'bg-slate-200/80 hover:bg-slate-300 text-slate-600'}">
+                        休
+                      </button>
+                    </div>
+                    <div class="text-[9px] text-slate-400 line-clamp-1">${course.location || ''}</div>
+                  </div>
+                  <div class="mt-1">${badgeHtml}</div>
+                </div>
+              `;
+            } else {
+              html += `<div class="border border-dashed border-slate-200 rounded-xl min-h-[66px] bg-slate-50/30"></div>`;
+            }
+          }
+        }
+      }
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function bulkSetAttendance(dateStr, dayOfWeek, status) {
+      const activeCourses = courses.filter(c => c.dayOfWeek === dayOfWeek);
+      if (activeCourses.length === 0) {
+        alert('この日に登録されている授業はありません。');
+        return;
+      }
+      activeCourses.forEach(c => {
+        records[`${dateStr}_${c.id}`] = { status: status, delayMinutes: 0, delaySeconds: 0 };
+      });
+      saveData();
+    }
+
+    // 2. 時間割一括編集グリッド
+    function renderTimetableEditGrid() {
+      const container = document.getElementById('edit-grid-container');
+      const dayCount = settings.includeSaturday ? 6 : 5;
+      const totalCols = dayCount + 1;
+
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.375rem;" class="min-w-[320px]">`;
+
+      html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
+      for (let d = 0; d < dayCount; d++) {
+        html += `<div class="p-2 text-center bg-indigo-50 text-indigo-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
+      }
+
+      for (let p = 1; p <= settings.maxPeriods; p++) {
+        html += `<div class="p-1 text-center font-bold text-xs text-slate-500 flex items-center justify-center bg-slate-50 rounded">${p}</div>`;
+
+        for (let d = 0; d < dayCount; d++) {
+          const dayOfWeek = d + 1;
+          const course = courses.find(c => c.dayOfWeek === dayOfWeek && c.period === p);
+
+          if (course) {
+            const maxAbsenceText = course.maxAbsences === null ? '許容: ∞' : `許容: ${course.maxAbsences}回`;
+            html += `
+              <div onclick="openCourseModal('${course.id}')" class="p-2 border border-indigo-200 bg-white hover:bg-indigo-50/50 rounded-xl shadow-sm flex flex-col justify-between min-h-[70px] cursor-pointer transition group">
+                <div>
+                  <div class="text-xs font-bold text-indigo-950 group-hover:text-indigo-600 line-clamp-2">${course.name}</div>
+                  <div class="text-[9px] text-slate-400">${course.location || ''} (${course.credits}単位)</div>
+                </div>
+                <div class="text-[9px] font-semibold text-slate-500 mt-1">${maxAbsenceText}</div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div onclick="openCourseModal(null, ${dayOfWeek}, ${p})" class="border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 rounded-xl min-h-[70px] flex flex-col items-center justify-center cursor-pointer text-slate-300 hover:text-indigo-500 transition">
+                <i class="fa-solid fa-plus text-sm mb-0.5"></i>
+                <span class="text-[9px] font-bold">追加</span>
+              </div>
+            `;
+          }
+        }
+      }
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    // 3. 出席状況集計
+    function renderSummaryGrid() {
+      const container = document.getElementById('summary-grid-container');
+      const dayCount = settings.includeSaturday ? 6 : 5;
+      const totalCols = dayCount + 1;
+
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.375rem;" class="min-w-[320px]">`;
+
+      html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
+      for (let d = 0; d < dayCount; d++) {
+        html += `<div class="p-2 text-center bg-slate-100 text-slate-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
+      }
+
+      for (let p = 1; p <= settings.maxPeriods; p++) {
+        html += `<div class="p-1 text-center font-bold text-xs text-slate-500 flex items-center justify-center bg-slate-50 rounded">${p}</div>`;
+
+        for (let d = 0; d < dayCount; d++) {
+          const dayOfWeek = d + 1;
+          const course = courses.find(c => c.dayOfWeek === dayOfWeek && c.period === p);
+
+          if (course) {
+            let pCount = 0, lCount = 0, aCount = 0, cCount = 0;
+            Object.keys(records).forEach(key => {
+              if (key.endsWith(`_${course.id}`)) {
+                const rec = records[key];
+                if (rec.status === 'present') pCount++;
+                if (rec.status === 'late') lCount++;
+                if (rec.status === 'absent') aCount++;
+                if (rec.status === 'cancelled') cCount++;
+              }
+            });
+
+            const isOver = course.maxAbsences !== null && aCount > course.maxAbsences;
+            const borderColor = isOver ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-white';
+
+            html += `
+              <div onclick="openCourseHistoryModal('${course.id}')" class="p-2 border ${borderColor} hover:border-indigo-400 rounded-xl shadow-sm flex flex-col justify-between min-h-[72px] cursor-pointer transition">
+                <div>
+                  <div class="text-xs font-bold text-slate-800 line-clamp-1">${course.name}</div>
+                  <div class="text-[9px] text-slate-400 line-clamp-1">${course.location || ''}</div>
+                </div>
+                <div class="mt-1 flex justify-between items-center text-[9px] font-bold">
+                  <span class="text-emerald-600">出${pCount}</span>
+                  <span class="text-amber-600">遅${lCount}</span>
+                  <span class="${isOver ? 'text-rose-600 font-black underline' : 'text-rose-500'}">欠${aCount}</span>
+                  <span class="text-slate-400">休${cCount}</span>
+                </div>
+              </div>
+            `;
+          } else {
+            html += `<div class="border border-slate-100 rounded-xl min-h-[72px] bg-slate-50/30"></div>`;
+          }
+        }
+      }
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function openCourseHistoryModal(courseId) {
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      document.getElementById('hist-modal-sub').textContent = `${DAY_NAMES[course.dayOfWeek - 1]}曜 ${course.period}限 (${course.location || '教室未設定'})`;
+      document.getElementById('hist-modal-title').textContent = course.name;
+
+      let pCount = 0, lCount = 0, aCount = 0, cCount = 0, totalDelaySec = 0;
+      const historyList = [];
+
+      Object.keys(records).forEach(key => {
+        if (key.endsWith(`_${course.id}`)) {
+          const dateStr = key.split('_')[0];
+          const rec = records[key];
+
+          if (rec.status === 'present') pCount++;
+          if (rec.status === 'late') {
+            lCount++;
+            totalDelaySec += (rec.delayMinutes || 0) * 60 + (rec.delaySeconds || 0);
+          }
+          if (rec.status === 'absent') aCount++;
+          if (rec.status === 'cancelled') cCount++;
+
+          historyList.push({
+            dateStr: dateStr,
+            status: rec.status,
+            delayMinutes: rec.delayMinutes || 0,
+            delaySeconds: rec.delaySeconds || 0
+          });
+        }
+      });
+
+      historyList.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+
+      document.getElementById('hist-modal-stats').innerHTML = `
+        <div>
+          <div class="text-[9px] text-slate-400 font-bold">出席</div>
+          <div class="text-xs font-bold text-emerald-600">${pCount}回</div>
+        </div>
+        <div>
+          <div class="text-[9px] text-slate-400 font-bold">遅刻</div>
+          <div class="text-xs font-bold text-amber-600">${lCount}回</div>
+        </div>
+        <div>
+          <div class="text-[9px] text-slate-400 font-bold">欠席</div>
+          <div class="text-xs font-bold text-rose-600">${aCount}回</div>
+        </div>
+        <div>
+          <div class="text-[9px] text-slate-400 font-bold">休講/テスト無</div>
+          <div class="text-xs font-bold text-slate-600">${cCount}回</div>
+        </div>
+      `;
+
+      const listContainer = document.getElementById('hist-modal-list');
+      if (historyList.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">出欠の記録がまだありません。</div>`;
+      } else {
+        let listHtml = '';
+        historyList.forEach(item => {
+          const dObj = new Date(item.dateStr);
+          const dayName = DAY_NAMES[dObj.getDay() === 0 ? 6 : dObj.getDay() - 1];
+
+          let statusBadge = '';
+          if (item.status === 'present') statusBadge = '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-xs">出席</span>';
+          if (item.status === 'late') statusBadge = `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-xs">遅刻 (${item.delayMinutes}分${item.delaySeconds}秒)</span>`;
+          if (item.status === 'absent') statusBadge = '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-xs">欠席</span>';
+          if (item.status === 'cancelled') statusBadge = '<span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-xs">休講 / テストなし</span>';
+
+          listHtml += `
+            <div class="flex justify-between items-center bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl">
+              <span class="text-xs font-bold text-slate-700">${item.dateStr} (${dayName})</span>
+              <div>${statusBadge}</div>
+            </div>
+          `;
+        });
+        listContainer.innerHTML = listHtml;
+      }
+
+      openModal('modal-course-history');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function openSpecialSwapModal(period) {
+      activeSwapPeriod = period;
+      document.getElementById('swap-modal-period-title').textContent = `1月20日(水) 第${period}限の選択`;
+
+      const select = document.getElementById('select-swap-course');
+      select.innerHTML = '<option value="">-- 科目を選択してください --</option>';
+
+      courses.forEach(c => {
+        select.innerHTML += `<option value="${c.id}">${c.name} (${DAY_NAMES[c.dayOfWeek - 1]}曜${c.period}限)</option>`;
+      });
+
+      if (swapAssignments[`p_${period}`]) {
+        select.value = swapAssignments[`p_${period}`];
+      }
+
+      openModal('modal-special-swap');
+    }
+
+    function openRecordModal(dateStr, courseId) {
+      activeTargetDate = dateStr;
+      activeCourseId = courseId;
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      const dateObj = new Date(dateStr);
+      const dayName = DAY_NAMES[dateObj.getDay() === 0 ? 6 : dateObj.getDay() - 1];
+
+      document.getElementById('rec-modal-date').textContent = `${dateStr} (${dayName}) ${course.period}限`;
+      document.getElementById('rec-modal-title').textContent = course.name;
+
+      const recordKey = `${dateStr}_${courseId}`;
+      const record = records[recordKey];
+
+      if (record) {
+        const checkedRadio = document.querySelector(`input[name="status"][value="${record.status}"]`);
+        if (checkedRadio) checkedRadio.checked = true;
+        document.getElementById('select-delay-min').value = record.delayMinutes || 0;
+        document.getElementById('select-delay-sec').value = record.delaySeconds || 0;
+        if (record.status === 'late') document.getElementById('delay-input-container').classList.remove('hidden');
+        else document.getElementById('delay-input-container').classList.add('hidden');
+      } else {
+        document.querySelector('input[name="status"][value="present"]').checked = true;
+        document.getElementById('select-delay-min').value = 0;
+        document.getElementById('select-delay-sec').value = 0;
+        document.getElementById('delay-input-container').classList.add('hidden');
+      }
+
+      openModal('modal-record');
+    }
+
+    function openCourseModal(courseId = null, defaultDay = 1, defaultPeriod = 1) {
+      const periodSelect = document.getElementById('course-period');
+      periodSelect.innerHTML = '';
+      for (let p = 1; p <= settings.maxPeriods; p++) {
+        periodSelect.innerHTML += `<option value="${p}">${p}限</option>`;
+      }
+
+      const deleteBtn = document.getElementById('btn-delete-course');
+      const unlimitedCheck = document.getElementById('course-unlimited-absences');
+      const maxSelect = document.getElementById('course-max-absences');
+
+      if (courseId) {
+        const course = courses.find(c => c.id === courseId);
+        if (!course) return;
+
+        document.getElementById('course-modal-title').textContent = '科目の編集';
+        document.getElementById('course-id').value = course.id;
+        document.getElementById('course-name').value = course.name;
+        document.getElementById('course-day').value = course.dayOfWeek;
+        document.getElementById('course-period').value = course.period;
+        document.getElementById('course-location').value = course.location || '';
+        document.getElementById('course-credits').value = course.credits || 2;
+
+        if (course.maxAbsences === null) {
+          unlimitedCheck.checked = true;
+          maxSelect.value = 3;
+          maxSelect.disabled = true;
+          maxSelect.classList.add('bg-slate-100', 'text-slate-400');
+        } else {
+          unlimitedCheck.checked = false;
+          maxSelect.value = course.maxAbsences;
+          maxSelect.disabled = false;
+          maxSelect.classList.remove('bg-slate-100', 'text-slate-400');
+        }
+
+        deleteBtn.classList.remove('hidden');
+      } else {
+        document.getElementById('course-modal-title').textContent = '新規科目の追加';
+        document.getElementById('course-id').value = '';
+        document.getElementById('course-name').value = '';
+        document.getElementById('course-day').value = defaultDay;
+        document.getElementById('course-period').value = defaultPeriod;
+        document.getElementById('course-location').value = '';
+        document.getElementById('course-credits').value = 2;
+
+        unlimitedCheck.checked = false;
+        maxSelect.value = 3;
+        maxSelect.disabled = false;
+        maxSelect.classList.remove('bg-slate-100', 'text-slate-400');
+
+        deleteBtn.classList.add('hidden');
+      }
+
+      openModal('modal-course-edit');
+    }
+  </script>
+</body>
+</html>
