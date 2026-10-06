@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- Safariホーム画面・PWAのキャッシュ無効化設定（更新が即座に反映されるようにする） -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <title>大学出席管理 - タイムテーブル</title>
-  <!-- ファビコン -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%234f46e5'/><path fill='none' stroke='%23ffffff' stroke-width='7' stroke-linecap='round' stroke-linejoin='round' d='M50 22 L85 38 L50 54 L15 38 Z M28 48.5 V66 C28 73 72 73 72 66 V48.5 M80 41 V66'/></svg>">
-  <!-- ホーム画面用アイコンの設定 -->
+
+  <!-- ファビコン & iOSホーム画面用可愛いアイコン (Data URIで画像不要) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%236366f1'/><text x='50' y='70' font-size='60' text-anchor='middle'>🎓</text></svg>">
   <link rel="apple-touch-icon" href="SNS-icon-2508-29.webp">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -44,29 +51,29 @@
   </header>
 
   <!-- メインコンテンツ領域 -->
-  <main class="max-w-3xl mx-auto px-3 py-4">
+  <main class="max-w-3xl mx-auto px-2 py-3">
 
     <!-- 1. 出欠記録タブ -->
     <section id="view-records" class="tab-content">
-      <div class="bg-white rounded-xl shadow-sm p-3 mb-3 flex items-center justify-between">
-        <button id="btn-prev-week" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+      <div class="bg-white rounded-xl shadow-sm p-2.5 mb-3 flex items-center justify-between">
+        <button id="btn-prev-week" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
           <i class="fa-solid fa-chevron-left mr-1"></i> 前週
         </button>
         <div class="text-center">
-          <div id="week-display-label" class="font-bold text-slate-800 text-sm">----年 --月 第-週</div>
-          <div id="week-date-range" class="text-[11px] text-slate-500">--/-- 〜 --/--</div>
+          <div id="week-display-label" class="font-bold text-slate-800 text-xs sm:text-sm">----年 --月 第-週</div>
+          <div id="week-date-range" class="text-[10px] text-slate-500">--/-- 〜 --/--</div>
         </div>
         <div class="flex gap-1">
           <button id="btn-this-week" class="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition">
             今週
           </button>
-          <button id="btn-next-week" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+          <button id="btn-next-week" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
             次週 <i class="fa-solid fa-chevron-right ml-1"></i>
           </button>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
+      <div class="bg-white rounded-2xl shadow-sm p-2 overflow-x-auto hide-scrollbar">
         <div id="attendance-grid-container"></div>
       </div>
     </section>
@@ -80,7 +87,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
+      <div class="bg-white rounded-2xl shadow-sm p-2 overflow-x-auto hide-scrollbar">
         <div id="edit-grid-container"></div>
       </div>
     </section>
@@ -94,7 +101,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm p-3 overflow-x-auto hide-scrollbar">
+      <div class="bg-white rounded-2xl shadow-sm p-2 overflow-x-auto hide-scrollbar">
         <div id="summary-grid-container"></div>
       </div>
     </section>
@@ -363,7 +370,6 @@
   <script>
     const DAY_NAMES = ["月", "火", "水", "木", "金", "土"];
     
-    // 安全なデータ読み込み関数
     let settings = { maxPeriods: 5, includeSaturday: false, kyodaiMode: true };
     try {
       const parsed = JSON.parse(localStorage.getItem('univ_settings'));
@@ -426,6 +432,12 @@
       updateWeekHeaderDisplay();
       renderAllViews();
     });
+
+    function getFirstChar(text) {
+      if (!text) return '';
+      const chars = Array.from(text);
+      return chars[0] || '';
+    }
 
     function initSelectOptions() {
       const minSelect = document.getElementById('select-delay-min');
@@ -679,26 +691,13 @@
       renderSummaryGrid();
     }
 
-    function toggleCancelledStatus(event, dateStr, courseId) {
-      event.stopPropagation();
-      const recordKey = `${dateStr}_${courseId}`;
-      const record = records[recordKey];
-
-      if (record && record.status === 'cancelled') {
-        delete records[recordKey];
-      } else {
-        records[recordKey] = { status: 'cancelled', delayMinutes: 0, delaySeconds: 0 };
-      }
-      saveData();
-    }
-
-    // 1. 出欠記録グリッド描画（確実なグリッド指定）
+    // 1. 出欠記録グリッド描画（科目名を一文字にし、「休」ボタンを全削除）
     function renderAttendanceGrid() {
       const container = document.getElementById('attendance-grid-container');
       const dayCount = settings.includeSaturday ? 6 : 5;
       const totalCols = dayCount + 1;
 
-      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.25rem;" class="min-w-[320px]">`;
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.25rem;" class="w-full">`;
 
       html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
       for (let d = 0; d < dayCount; d++) {
@@ -714,7 +713,7 @@
                      schedInfo.type === 'special_swap' ? 'bg-indigo-100 text-indigo-800 font-bold' : 
                      schedInfo.type === 'exam' ? 'bg-purple-100 text-purple-800 font-bold' : 
                      schedInfo.type === 'fb' ? 'bg-teal-100 text-teal-800 font-bold' : 'bg-rose-100 text-rose-800';
-          badgeLabel = `<div class="text-[8px] font-bold px-1 rounded ${bg} line-clamp-1 mt-0.5">${schedInfo.label}</div>`;
+          badgeLabel = `<div class="text-[8px] font-bold px-0.5 rounded ${bg} truncate mt-0.5">${schedInfo.label}</div>`;
         }
 
         html += `
@@ -725,8 +724,8 @@
               ${badgeLabel}
             </div>
             <div class="flex gap-0.5 mt-1 pt-1 border-t ${isToday ? 'border-indigo-400' : 'border-slate-200'}">
-              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'present')" class="flex-1 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold hover:opacity-90">全出</button>
-              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'absent')" class="flex-1 py-0.5 rounded bg-rose-500 text-white text-[9px] font-bold hover:opacity-90">全欠</button>
+              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'present')" class="flex-1 py-0.5 rounded bg-emerald-500 text-white text-[8px] font-bold hover:opacity-90">全出</button>
+              <button onclick="bulkSetAttendance('${dateStr}', ${schedInfo.effectiveDay}, 'absent')" class="flex-1 py-0.5 rounded bg-rose-500 text-white text-[8px] font-bold hover:opacity-90">全欠</button>
             </div>
           </div>
         `;
@@ -747,34 +746,31 @@
             if (course) {
               const recordKey = `${dateStr}_${course.id}`;
               const record = records[recordKey];
-              let badgeHtml = '<span class="text-[9px] text-indigo-600 font-bold">振替授業</span>';
+              let badgeHtml = '<span class="text-[8px] text-indigo-600 font-bold">振替</span>';
               if (record) {
-                if (record.status === 'present') badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[9px]">出席</span>';
-                if (record.status === 'late') badgeHtml = '<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[9px]">遅刻</span>';
-                if (record.status === 'absent') badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[9px]">欠席</span>';
-                if (record.status === 'cancelled') badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[9px]">休講/無</span>';
+                if (record.status === 'present') badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[8px]">出</span>';
+                if (record.status === 'late') badgeHtml = '<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[8px]">遅</span>';
+                if (record.status === 'absent') badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[8px]">欠</span>';
+                if (record.status === 'cancelled') badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-200 text-slate-700 font-bold text-[8px]">休講</span>';
               }
 
               html += `
-                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1.5 border border-indigo-300 bg-indigo-50/40 rounded-xl flex flex-col justify-between min-h-[66px] cursor-pointer">
-                  <div class="flex justify-between items-start">
-                    <div class="text-[9px] text-indigo-700 font-bold line-clamp-1">振替: ${course.name}</div>
-                    <button onclick="toggleCancelledStatus(event, '${dateStr}', '${course.id}')" class="text-[8px] px-1 py-0.2 rounded ${record && record.status==='cancelled' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'} font-bold ml-0.5">休</button>
-                  </div>
-                  <div class="mt-1">${badgeHtml}</div>
+                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1 border border-indigo-300 bg-indigo-50/40 rounded-xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer text-center">
+                  <div class="text-sm font-bold text-indigo-950">${getFirstChar(course.name)}</div>
+                  <div class="mt-0.5">${badgeHtml}</div>
                 </div>
               `;
             } else {
               html += `
-                <div onclick="openSpecialSwapModal(${p})" class="border border-dashed border-indigo-300 bg-indigo-50/20 hover:bg-indigo-50 rounded-xl min-h-[66px] flex flex-col items-center justify-center cursor-pointer p-1 text-center">
+                <div onclick="openSpecialSwapModal(${p})" class="border border-dashed border-indigo-300 bg-indigo-50/20 hover:bg-indigo-50 rounded-xl min-h-[60px] flex flex-col items-center justify-center cursor-pointer p-1 text-center">
                   <i class="fa-solid fa-plus text-indigo-500 text-xs mb-0.5"></i>
-                  <span class="text-[9px] font-bold text-indigo-600">振替指定</span>
+                  <span class="text-[8px] font-bold text-indigo-600">振替</span>
                 </div>
               `;
             }
 
           } else if (schedInfo.isOff) {
-            html += `<div class="border border-slate-200 rounded-xl min-h-[66px] bg-slate-100/60 p-1 flex items-center justify-center text-[10px] text-slate-400 font-bold text-center">${schedInfo.label || '授業なし'}</div>`;
+            html += `<div class="border border-slate-200 rounded-xl min-h-[60px] bg-slate-100/60 p-0.5 flex items-center justify-center text-[9px] text-slate-400 font-bold text-center">${schedInfo.label || '休'}</div>`;
           } else {
             const course = courses.find(c => c.dayOfWeek === schedInfo.effectiveDay && c.period === p);
 
@@ -782,46 +778,34 @@
               const recordKey = `${dateStr}_${course.id}`;
               const record = records[recordKey];
 
-              let badgeHtml = '<span class="text-[9px] text-slate-400">未記録</span>';
+              let badgeHtml = '<span class="text-[8px] text-slate-300">未</span>';
               let bgClass = 'bg-slate-50 border-slate-200 hover:border-indigo-300';
 
               if (record) {
                 if (record.status === 'present') {
-                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[9px]"><i class="fa-solid fa-check"></i> 出席</span>';
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[8px]">出</span>';
                   bgClass = 'bg-emerald-50/50 border-emerald-300';
                 } else if (record.status === 'late') {
-                  const delayText = (record.delayMinutes || record.delaySeconds) ? `${record.delayMinutes}分` : '';
-                  badgeHtml = `<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[9px]"><i class="fa-solid fa-clock"></i> 遅刻 ${delayText}</span>`;
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[8px]">遅</span>';
                   bgClass = 'bg-amber-50/50 border-amber-300';
                 } else if (record.status === 'absent') {
-                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[9px]"><i class="fa-solid fa-xmark"></i> 欠席</span>';
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold text-[8px]">欠</span>';
                   bgClass = 'bg-rose-50/50 border-rose-300';
                 } else if (record.status === 'cancelled') {
-                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-200 text-slate-600 font-bold text-[9px]"><i class="fa-solid fa-ban"></i> 休講/無</span>';
-                  bgClass = 'bg-slate-100/90 border-slate-300';
+                  // 休講に設定された時だけ「休講」バッジを表示！
+                  badgeHtml = '<span class="px-1 py-0.5 rounded bg-slate-600 text-white font-bold text-[8px]">休講</span>';
+                  bgClass = 'bg-slate-100 border-slate-300';
                 }
               }
 
-              const isCancelled = record && record.status === 'cancelled';
-
               html += `
-                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1.5 border rounded-xl flex flex-col justify-between min-h-[66px] cursor-pointer transition ${bgClass}">
-                  <div>
-                    <div class="flex justify-between items-start gap-1">
-                      <div class="text-xs font-bold text-slate-800 line-clamp-1 flex-1">${course.name}</div>
-                      <button onclick="toggleCancelledStatus(event, '${dateStr}', '${course.id}')" 
-                              title="休講に設定" 
-                              class="text-[8px] px-1 py-0.2 rounded font-bold transition flex-shrink-0 ${isCancelled ? 'bg-slate-700 text-white' : 'bg-slate-200/80 hover:bg-slate-300 text-slate-600'}">
-                        休
-                      </button>
-                    </div>
-                    <div class="text-[9px] text-slate-400 line-clamp-1">${course.location || ''}</div>
-                  </div>
-                  <div class="mt-1">${badgeHtml}</div>
+                <div onclick="openRecordModal('${dateStr}', '${course.id}')" class="p-1 border rounded-xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer transition text-center ${bgClass}">
+                  <div class="text-sm font-bold text-slate-800">${getFirstChar(course.name)}</div>
+                  <div class="mt-0.5">${badgeHtml}</div>
                 </div>
               `;
             } else {
-              html += `<div class="border border-dashed border-slate-200 rounded-xl min-h-[66px] bg-slate-50/30"></div>`;
+              html += `<div class="border border-dashed border-slate-200 rounded-xl min-h-[60px] bg-slate-50/30"></div>`;
             }
           }
         }
@@ -843,17 +827,17 @@
       saveData();
     }
 
-    // 2. 時間割一括編集グリッド
+    // 2. 時間割一括編集グリッド（科目名一文字化）
     function renderTimetableEditGrid() {
       const container = document.getElementById('edit-grid-container');
       const dayCount = settings.includeSaturday ? 6 : 5;
       const totalCols = dayCount + 1;
 
-      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.375rem;" class="min-w-[320px]">`;
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.25rem;" class="w-full">`;
 
       html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
       for (let d = 0; d < dayCount; d++) {
-        html += `<div class="p-2 text-center bg-indigo-50 text-indigo-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
+        html += `<div class="p-1.5 text-center bg-indigo-50 text-indigo-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
       }
 
       for (let p = 1; p <= settings.maxPeriods; p++) {
@@ -864,21 +848,16 @@
           const course = courses.find(c => c.dayOfWeek === dayOfWeek && c.period === p);
 
           if (course) {
-            const maxAbsenceText = course.maxAbsences === null ? '許容: ∞' : `許容: ${course.maxAbsences}回`;
             html += `
-              <div onclick="openCourseModal('${course.id}')" class="p-2 border border-indigo-200 bg-white hover:bg-indigo-50/50 rounded-xl shadow-sm flex flex-col justify-between min-h-[70px] cursor-pointer transition group">
-                <div>
-                  <div class="text-xs font-bold text-indigo-950 group-hover:text-indigo-600 line-clamp-2">${course.name}</div>
-                  <div class="text-[9px] text-slate-400">${course.location || ''} (${course.credits}単位)</div>
-                </div>
-                <div class="text-[9px] font-semibold text-slate-500 mt-1">${maxAbsenceText}</div>
+              <div onclick="openCourseModal('${course.id}')" class="p-1 border border-indigo-200 bg-white hover:bg-indigo-50/50 rounded-xl shadow-sm flex flex-col items-center justify-center min-h-[60px] cursor-pointer transition text-center group">
+                <div class="text-sm font-bold text-indigo-950 group-hover:text-indigo-600">${getFirstChar(course.name)}</div>
+                <div class="text-[8px] text-slate-400 mt-0.5">${course.credits}単位</div>
               </div>
             `;
           } else {
             html += `
-              <div onclick="openCourseModal(null, ${dayOfWeek}, ${p})" class="border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 rounded-xl min-h-[70px] flex flex-col items-center justify-center cursor-pointer text-slate-300 hover:text-indigo-500 transition">
-                <i class="fa-solid fa-plus text-sm mb-0.5"></i>
-                <span class="text-[9px] font-bold">追加</span>
+              <div onclick="openCourseModal(null, ${dayOfWeek}, ${p})" class="border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 rounded-xl min-h-[60px] flex flex-col items-center justify-center cursor-pointer text-slate-300 hover:text-indigo-500 transition">
+                <i class="fa-solid fa-plus text-xs"></i>
               </div>
             `;
           }
@@ -889,17 +868,17 @@
       container.innerHTML = html;
     }
 
-    // 3. 出席状況集計
+    // 3. 出席状況集計（科目名一文字化）
     function renderSummaryGrid() {
       const container = document.getElementById('summary-grid-container');
       const dayCount = settings.includeSaturday ? 6 : 5;
       const totalCols = dayCount + 1;
 
-      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.375rem;" class="min-w-[320px]">`;
+      let html = `<div style="display: grid; grid-template-columns: repeat(${totalCols}, minmax(0, 1fr)); gap: 0.25rem;" class="w-full">`;
 
       html += `<div class="p-1 text-center font-bold text-xs text-slate-400 flex items-center justify-center">時限</div>`;
       for (let d = 0; d < dayCount; d++) {
-        html += `<div class="p-2 text-center bg-slate-100 text-slate-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
+        html += `<div class="p-1.5 text-center bg-slate-100 text-slate-700 font-bold text-xs rounded-lg">${DAY_NAMES[d]}</div>`;
       }
 
       for (let p = 1; p <= settings.maxPeriods; p++) {
@@ -925,21 +904,17 @@
             const borderColor = isOver ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-white';
 
             html += `
-              <div onclick="openCourseHistoryModal('${course.id}')" class="p-2 border ${borderColor} hover:border-indigo-400 rounded-xl shadow-sm flex flex-col justify-between min-h-[72px] cursor-pointer transition">
-                <div>
-                  <div class="text-xs font-bold text-slate-800 line-clamp-1">${course.name}</div>
-                  <div class="text-[9px] text-slate-400 line-clamp-1">${course.location || ''}</div>
-                </div>
-                <div class="mt-1 flex justify-between items-center text-[9px] font-bold">
-                  <span class="text-emerald-600">出${pCount}</span>
-                  <span class="text-amber-600">遅${lCount}</span>
-                  <span class="${isOver ? 'text-rose-600 font-black underline' : 'text-rose-500'}">欠${aCount}</span>
-                  <span class="text-slate-400">休${cCount}</span>
+              <div onclick="openCourseHistoryModal('${course.id}')" class="p-1 border ${borderColor} hover:border-indigo-400 rounded-xl shadow-sm flex flex-col items-center justify-between min-h-[60px] cursor-pointer transition text-center">
+                <div class="text-sm font-bold text-slate-800 mt-0.5">${getFirstChar(course.name)}</div>
+                <div class="flex gap-0.5 text-[8px] font-bold mb-0.5">
+                  <span class="text-emerald-600">${pCount}</span>/
+                  <span class="text-amber-600">${lCount}</span>/
+                  <span class="${isOver ? 'text-rose-600 font-black' : 'text-rose-500'}">${aCount}</span>
                 </div>
               </div>
             `;
           } else {
-            html += `<div class="border border-slate-100 rounded-xl min-h-[72px] bg-slate-50/30"></div>`;
+            html += `<div class="border border-slate-100 rounded-xl min-h-[60px] bg-slate-50/30"></div>`;
           }
         }
       }
